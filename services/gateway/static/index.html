@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sovereign AI Stack — Ops Console</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-2: #f0f2f5;
+      --border: #dfe3ea;
+      --text: #111827;
+      --text-muted: #5b6475;
+      --accent: #0f62fe;
+      --accent-hover: #0353e9;
+      --ok-bg: #e6f4ea;
+      --ok-fg: #137333;
+      --warn-bg: #fef3c7;
+      --warn-fg: #92400e;
+      --err-bg: #fee2e2;
+      --err-fg: #b91c1c;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #1f2630;
+      --border: #2d3643;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --ok-bg: #122b1c;
+      --ok-fg: #4ade80;
+      --warn-bg: #2e2108;
+      --warn-fg: #fbbf24;
+      --err-bg: #311215;
+      --err-fg: #f87171;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .brand span {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    nav.tabs {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    nav.tabs button {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 11px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    nav.tabs button:hover { color: var(--text); }
+    nav.tabs button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 20px auto;
+      padding: 0 20px 40px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    select, input[type="text"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+    }
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button.btn {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button.btn:hover { filter: brightness(0.96); }
+    button.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    button.btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+    button.btn-primary:hover { background: var(--accent-hover); }
+    button.btn-ok {
+      background: var(--ok-bg);
+      border-color: var(--ok-fg);
+      color: var(--ok-fg);
+    }
+    button.btn-err {
+      background: var(--err-bg);
+      border-color: var(--err-fg);
+      color: var(--err-fg);
+    }
+    button.btn-sm {
+      padding: 4px 9px;
+      font-size: 12px;
+    }
+
+    .samples {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .samples span {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .metric-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+    }
+    .metric-box .k {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .metric-box .v {
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--mono);
+      margin-top: 2px;
+      word-break: break-all;
+    }
+
+    .answer-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .answer-box h1, .answer-box h2, .answer-box h3, .answer-box h4 {
+      margin: 14px 0 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .answer-box h1:first-child, .answer-box h2:first-child, .answer-box h3:first-child { margin-top: 0; }
+    .answer-box h3 { font-size: 14.5px; }
+    .answer-box h4 { font-size: 13.5px; color: var(--text-muted); }
+    .answer-box p { margin: 6px 0; }
+    .answer-box ul, .answer-box ol { margin: 6px 0 10px 20px; padding: 0; }
+    .answer-box li { margin: 3px 0; }
+    .answer-box hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .answer-box blockquote {
+      margin: 10px 0;
+      padding: 8px 12px;
+      border-left: 3px solid var(--accent);
+      background: rgba(37, 99, 235, 0.06);
+      border-radius: 0 6px 6px 0;
+    }
+    .answer-box code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: rgba(127, 127, 127, 0.14);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .answer-box table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 12.5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .answer-box th, .answer-box td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .answer-box th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+      background: rgba(127, 127, 127, 0.06);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--mono);
+      letter-spacing: 0.02em;
+    }
+    .badge-allow { background: var(--ok-bg); color: var(--ok-fg); }
+    .badge-warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge-deny { background: var(--err-bg); color: var(--err-fg); }
+
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      font-weight: 600;
+    }
+    td.mono, th.mono { font-family: var(--mono); }
+    td.num, th.num { text-align: right; font-family: var(--mono); }
+
+    .banner {
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+    .banner-ok { background: var(--ok-bg); color: var(--ok-fg); border-color: var(--ok-fg); }
+    .banner-warn { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-fg); }
+    .banner-err { background: var(--err-bg); color: var(--err-fg); border-color: var(--err-fg); }
+
+    .muted { color: var(--text-muted); font-size: 12.5px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <h1>Sovereign AI Stack</h1>
+      <span>ops-console</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm" id="theme-toggle" type="button">Dark Mode</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" class="active" data-tab="runner">1. Gateway Runner</button>
+    <button type="button" data-tab="approvals">2. Approval Inbox</button>
+    <button type="button" data-tab="audit">3. Audit &amp; Hash Chain</button>
+    <button type="button" data-tab="evals">4. Eval Scorecard</button>
+  </nav>
+
+  <main>
+    <!-- TAB 1: GATEWAY RUNNER -->
+    <section id="tab-runner" class="tab-panel active">
+      <div class="card">
+        <div class="card-header">
+          <h2>Execute Gateway Request (<code>POST /v1/chat</code>)</h2>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="runner-key">Tenant API Key</label>
+            <select id="runner-key">
+              <option value="havells-viewer-key">Havells Viewer (havells-viewer-key)</option>
+              <option value="havells-sales-key" selected>Havells Sales Rep (havells-sales-key)</option>
+              <option value="havells-mgr-key">Havells Manager (havells-mgr-key)</option>
+              <option value="havells-admin-key">Havells Admin (havells-admin-key)</option>
+              <option value="licious-sales-key">Licious Sales Rep (licious-sales-key)</option>
+              <option value="licious-mgr-key">Licious Manager (licious-mgr-key)</option>
+            </select>
+          </div>
+          <div>
+            <label for="runner-model">Model</label>
+            <select id="runner-model">
+              <option value="gemini-3.8-flash" selected>gemini-3.8-flash (Vertex ADC)</option>
+              <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Vertex ADC)</option>
+              <option value="gemini-2.5-flash">gemini-2.5-flash (Vertex ADC)</option>
+              <option value="offline/planner-v1">offline/planner-v1</option>
+              <option value="offline/baseline-lite">offline/baseline-lite</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="runner-prompt">Prompt</label>
+          <textarea id="runner-prompt" placeholder="Ask about inventory, open orders, SOP rules, or raise a purchase requisition..."></textarea>
+        </div>
+
+        <div class="samples">
+          <span>Quick samples:</span>
+          <button type="button" class="btn btn-sm sample-btn" data-key="havells-sales-key" data-prompt="Which electrical SKUs are currently low on stock in Bengaluru?">Analytics</button>
+          <button type="button" class="btn btn-sm sample-btn" data-key="havells-mgr-key" data-prompt="Create a purchase requisition for 250 units of SKU HV-FAN-001 for the Bengaluru warehouse.">Approval Workflow</button>
+          <button type="button" class="btn btn-sm sample-btn" data-key="havells-sales-key" data-prompt="Show open orders and sales summary for tenant licious_coldchain.">Cross-Tenant Attack</button>
+          <button type="button" class="btn btn-sm sample-btn" data-key="havells-sales-key" data-prompt="Look up the distributor profile for our top Bengaluru Havells distributor including contact details.">PII Check</button>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="runner-submit">Run Prompt</button>
+          <span id="runner-status" class="muted"></span>
+        </div>
+      </div>
+
+      <div id="runner-error" class="banner banner-err hidden"></div>
+
+      <div id="runner-result" class="hidden">
+        <div class="metrics-bar">
+          <div class="metric-box"><div class="k">Model Used</div><div class="v" id="res-model">-</div></div>
+          <div class="metric-box"><div class="k">Tenant / Role</div><div class="v" id="res-tenant">-</div></div>
+          <div class="metric-box"><div class="k">Latency</div><div class="v" id="res-latency">-</div></div>
+          <div class="metric-box"><div class="k">Tokens</div><div class="v" id="res-tokens">-</div></div>
+          <div class="metric-box"><div class="k">Cost (USD)</div><div class="v" id="res-cost">-</div></div>
+          <div class="metric-box"><div class="k">PII Redacted</div><div class="v" id="res-pii">-</div></div>
+          <div class="metric-box"><div class="k">Trace ID</div><div class="v" id="res-trace">-</div></div>
+        </div>
+
+        <div id="res-pending-banner" class="banner banner-warn hidden"></div>
+
+        <div class="card">
+          <div class="card-header"><h2>Answer</h2></div>
+          <div id="res-answer" class="answer-box"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2>Tool Call Traces</h2></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tool</th>
+                  <th>Server</th>
+                  <th>Policy Decision</th>
+                  <th>Rule</th>
+                  <th>Status</th>
+                  <th class="num">Duration</th>
+                  <th class="num">PII Redacted</th>
+                  <th>Idempotency Key</th>
+                </tr>
+              </thead>
+              <tbody id="res-traces-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: APPROVAL INBOX -->
+    <section id="tab-approvals" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Human-in-the-Loop Approval Inbox</h2>
+          <div class="btn-row" style="margin-top:0;">
+            <select id="approvals-key" style="width:auto;">
+              <option value="havells-mgr-key" selected>Havells Manager (havells-mgr-key)</option>
+              <option value="licious-mgr-key">Licious Manager (licious-mgr-key)</option>
+              <option value="havells-admin-key">Admin (havells-admin-key)</option>
+            </select>
+            <button type="button" class="btn btn-primary" id="approvals-refresh">Refresh</button>
+          </div>
+        </div>
+        <div id="approvals-banner" class="banner hidden"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tenant</th>
+                <th>SKU</th>
+                <th class="num">Qty</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Requested By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approvals-body">
+              <tr><td colspan="8" class="muted">Click Refresh or switch to this tab to load pending approvals.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: AUDIT & HASH CHAIN -->
+    <section id="tab-audit" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Immutable SHA-256 Hash-Chained Audit Log</h2>
+          <div class="btn-row" style="margin-top:0;">
+            <select id="audit-key" style="width:auto;">
+              <option value="havells-admin-key" selected>Havells Admin (havells-admin-key)</option>
+              <option value="havells-mgr-key">Havells Manager (havells-mgr-key)</option>
+              <option value="licious-mgr-key">Licious Manager (licious-mgr-key)</option>
+            </select>
+            <button type="button" class="btn" id="audit-refresh">Refresh Log</button>
+            <button type="button" class="btn btn-primary" id="audit-verify-btn">Verify SHA-256 Chain</button>
+          </div>
+        </div>
+
+        <div id="audit-verify-banner" class="banner hidden"></div>
+        <div id="audit-error" class="banner banner-err hidden"></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Timestamp</th>
+                <th>Tenant</th>
+                <th>Actor</th>
+                <th>Tool</th>
+                <th>Outcome</th>
+                <th>Trace ID</th>
+                <th>Prev Hash</th>
+                <th>Entry Hash</th>
+              </tr>
+            </thead>
+            <tbody id="audit-body">
+              <tr><td colspan="9" class="muted">Click Refresh Log to load audit entries.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: EVAL SCORECARD -->
+    <section id="tab-evals" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Model Baseline Comparison (<code>GET /v1/evals/latest</code>)</h2>
+          <button type="button" class="btn btn-primary" id="evals-refresh">Reload Scorecard</button>
+        </div>
+        <div id="evals-meta" class="muted" style="margin-bottom:10px;"></div>
+        <div id="evals-error" class="banner banner-err hidden"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th class="num">Passed</th>
+                <th class="num">Pass Rate</th>
+                <th class="num">Tool Acc</th>
+                <th class="num">Policy Compliance</th>
+                <th class="num">Security Block</th>
+                <th class="num">P50 (ms)</th>
+                <th class="num">P95 (ms)</th>
+                <th class="num">Tokens</th>
+                <th class="num">Cost (USD)</th>
+              </tr>
+            </thead>
+            <tbody id="evals-models-body">
+              <tr><td colspan="10" class="muted">Loading latest evaluation report...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Per-Category Breakdown</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Category</th>
+                <th class="num">Passed</th>
+                <th class="num">Total</th>
+                <th class="num">Pass Rate</th>
+              </tr>
+            </thead>
+            <tbody id="evals-category-body">
+              <tr><td colspan="5" class="muted">No category data loaded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      }[c]));
+
+      const pct = (v) => `${(Number(v || 0) * 100).toFixed(1)}%`;
+      const shortHash = (h) => (h ? `${String(h).slice(0, 12)}…` : "-");
+
+      function policyBadge(outcome) {
+        const val = String(outcome || "UNKNOWN").toUpperCase();
+        if (val === "ALLOW" || val === "APPROVED") return `<span class="badge badge-allow">${esc(val)}</span>`;
+        if (val === "REQUIRE_APPROVAL") return `<span class="badge badge-warn">REQUIRE_APPROVAL</span>`;
+        return `<span class="badge badge-deny">${esc(val)}</span>`;
+      }
+
+      function renderInline(text) {
+        let s = esc(text);
+        s = s.replace(/\$([^$\n]+)\$/g, (_, expr) =>
+          expr
+            .replace(/\\times/g, "×")
+            .replace(/\\ge/g, "≥")
+            .replace(/\\le/g, "≤")
+            .replace(/\\text\{([^}]*)\}/g, "$1")
+        );
+        s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+        s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+        return s;
+      }
+
+      function renderMarkdown(raw) {
+        const lines = String(raw ?? "").replace(/\r\n/g, "\n").split("\n");
+        const out = [];
+        let i = 0;
+        while (i < lines.length) {
+          const line = lines[i];
+          const trimmed = line.trim();
+          if (!trimmed) { i++; continue; }
+          if (/^---+$/.test(trimmed)) { out.push("<hr>"); i++; continue; }
+          const hMatch = trimmed.match(/^(#{1,4})\s+(.+)$/);
+          if (hMatch) {
+            const lvl = hMatch[1].length;
+            out.push(`<h${lvl}>${renderInline(hMatch[2])}</h${lvl}>`);
+            i++; continue;
+          }
+          if (trimmed.startsWith(">")) {
+            const bq = [];
+            while (i < lines.length && lines[i].trim().startsWith(">")) {
+              bq.push(renderInline(lines[i].trim().replace(/^>\s?/, "")));
+              i++;
+            }
+            out.push(`<blockquote>${bq.join("<br>")}</blockquote>`);
+            continue;
+          }
+          if (trimmed.startsWith("|") && i + 1 < lines.length && /^\|[\s:|-]+\|?$/.test(lines[i + 1].trim())) {
+            const parseRow = (r) => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+            const headers = parseRow(trimmed);
+            i += 2;
+            const rows = [];
+            while (i < lines.length && lines[i].trim().startsWith("|")) {
+              rows.push(parseRow(lines[i]));
+              i++;
+            }
+            out.push(
+              `<table><thead><tr>${headers.map((h) => `<th>${renderInline(h)}</th>`).join("")}</tr></thead>` +
+              `<tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`
+            );
+            continue;
+          }
+          if (/^[-*]\s+/.test(trimmed)) {
+            const items = [];
+            while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+              items.push(`<li>${renderInline(lines[i].trim().replace(/^[-*]\s+/, ""))}</li>`);
+              i++;
+            }
+            out.push(`<ul>${items.join("")}</ul>`);
+            continue;
+          }
+          if (/^\d+\.\s+/.test(trimmed)) {
+            const items = [];
+            while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+              items.push(`<li>${renderInline(lines[i].trim().replace(/^\d+\.\s+/, ""))}</li>`);
+              i++;
+            }
+            out.push(`<ol>${items.join("")}</ol>`);
+            continue;
+          }
+          out.push(`<p>${renderInline(trimmed)}</p>`);
+          i++;
+        }
+        return out.join("");
+      }
+
+      // Theme toggle
+      const themeBtn = document.getElementById("theme-toggle");
+      themeBtn.addEventListener("click", () => {
+        const root = document.documentElement;
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        themeBtn.textContent = next === "dark" ? "Light Mode" : "Dark Mode";
+      });
+
+      // Tabs
+      const tabBtns = document.querySelectorAll("nav.tabs button");
+      const panels = document.querySelectorAll(".tab-panel");
+      tabBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          tabBtns.forEach((b) => b.classList.remove("active"));
+          panels.forEach((p) => p.classList.remove("active"));
+          btn.classList.add("active");
+          const target = btn.getAttribute("data-tab");
+          document.getElementById(`tab-${target}`).classList.add("active");
+          if (target === "approvals") loadApprovals();
+          if (target === "audit") loadAudit();
+          if (target === "evals") loadEvals();
+        });
+      });
+
+      // Sample buttons
+      document.querySelectorAll(".sample-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.getElementById("runner-key").value = btn.getAttribute("data-key");
+          document.getElementById("runner-prompt").value = btn.getAttribute("data-prompt");
+        });
+      });
+
+      // Tab 1: Gateway Runner
+      async function runPrompt() {
+        const key = document.getElementById("runner-key").value;
+        const model = document.getElementById("runner-model").value;
+        const message = document.getElementById("runner-prompt").value.trim();
+        const statusEl = document.getElementById("runner-status");
+        const errEl = document.getElementById("runner-error");
+        const resEl = document.getElementById("runner-result");
+        const submitBtn = document.getElementById("runner-submit");
+
+        errEl.classList.add("hidden");
+        if (!message) {
+          errEl.textContent = "Please enter a prompt first.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        statusEl.textContent = "Executing...";
+        try {
+          const resp = await fetch("/v1/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-API-Key": key
+            },
+            body: JSON.stringify({ message, model, max_rounds: 5 })
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            resEl.classList.add("hidden");
+            errEl.textContent = `HTTP ${resp.status}: ${data.detail || JSON.stringify(data)}`;
+            errEl.classList.remove("hidden");
+            return;
+          }
+
+          document.getElementById("res-model").textContent =
+            data.model_used + (data.fallback_triggered ? " (fallback)" : "");
+          document.getElementById("res-tenant").textContent = `${data.tenant_id} / ${data.role}`;
+          document.getElementById("res-latency").textContent = `${Number(data.total_latency_ms || 0).toFixed(1)} ms`;
+          document.getElementById("res-tokens").textContent = String(data.tokens_used ?? 0);
+          document.getElementById("res-cost").textContent = `$${Number(data.cost_usd || 0).toFixed(5)}`;
+          document.getElementById("res-pii").textContent = String(data.pii_redacted_count ?? 0);
+          document.getElementById("res-trace").textContent = data.trace_id || "-";
+          document.getElementById("res-answer").innerHTML = renderMarkdown(data.answer || "");
+
+          const pendingEl = document.getElementById("res-pending-banner");
+          if (Array.isArray(data.pending_approvals) && data.pending_approvals.length > 0) {
+            pendingEl.textContent = `${data.pending_approvals.length} purchase requisition(s) queued for human approval. Open the Approval Inbox tab to review.`;
+            pendingEl.classList.remove("hidden");
+          } else {
+            pendingEl.classList.add("hidden");
+          }
+
+          const tbody = document.getElementById("res-traces-body");
+          const traces = Array.isArray(data.tool_traces) ? data.tool_traces : [];
+          if (traces.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="muted">No tool calls recorded for this response.</td></tr>`;
+          } else {
+            tbody.innerHTML = traces.map((t) => {
+              const pd = t.policy_decision || {};
+              const red = t.redactions || {};
+              const idem = t.idempotency_key
+                ? `${esc(t.idempotency_key)}${t.cached_idempotent ? " (cached)" : ""}`
+                : "-";
+              return `<tr>
+                <td class="mono">${esc(t.tool_name)}</td>
+                <td class="mono">${esc(t.server)}</td>
+                <td>${policyBadge(pd.outcome)}</td>
+                <td class="mono">${esc(pd.rule_id || "-")}</td>
+                <td class="mono">${esc(t.status)}</td>
+                <td class="num">${Number(t.duration_ms || 0).toFixed(1)} ms</td>
+                <td class="num">${Number(red.redacted_count || 0)}</td>
+                <td class="mono">${idem}</td>
+              </tr>`;
+            }).join("");
+          }
+
+          resEl.classList.remove("hidden");
+        } catch (err) {
+          errEl.textContent = `Request failed: ${err.message}`;
+          errEl.classList.remove("hidden");
+        } finally {
+          submitBtn.disabled = false;
+          statusEl.textContent = "";
+        }
+      }
+      document.getElementById("runner-submit").addEventListener("click", runPrompt);
+
+      // Tab 2: Approval Inbox
+      async function loadApprovals() {
+        const key = document.getElementById("approvals-key").value;
+        const banner = document.getElementById("approvals-banner");
+        const tbody = document.getElementById("approvals-body");
+        banner.classList.add("hidden");
+
+        try {
+          const resp = await fetch("/v1/approvals", { headers: { "X-API-Key": key } });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            banner.className = "banner banner-err";
+            banner.textContent = `Failed to load approvals (HTTP ${resp.status}): ${data.detail || JSON.stringify(data)}`;
+            banner.classList.remove("hidden");
+            return;
+          }
+          const items = Array.isArray(data)
+            ? data
+            : (data.approvals || data.items || data.requisitions || []);
+          if (items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="muted">No requisitions in inbox.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = items.map((item) => {
+            const id = item.id ?? item.requisition_id;
+            const status = String(item.status || "pending").toLowerCase();
+            const badge = status === "approved"
+              ? `<span class="badge badge-allow">approved</span>`
+              : status === "rejected"
+              ? `<span class="badge badge-deny">rejected</span>`
+              : `<span class="badge badge-warn">${esc(status)}</span>`;
+            const isPending = status === "pending" || status === "pending_approval";
+            const actions = isPending
+              ? `<button class="btn btn-sm btn-ok" onclick="decideApproval('${esc(id)}', 'approve')">Approve</button>
+                 <button class="btn btn-sm btn-err" onclick="decideApproval('${esc(id)}', 'reject')">Reject</button>`
+              : `<span class="muted">Decided</span>`;
+            const details = item.reason || item.warehouse || item.notes || "-";
+            return `<tr>
+              <td class="mono">${esc(id)}</td>
+              <td class="mono">${esc(item.tenant_id || "-")}</td>
+              <td class="mono">${esc(item.sku || item.sku_id || "-")}</td>
+              <td class="num">${esc(item.quantity ?? "-")}</td>
+              <td>${esc(details)}</td>
+              <td>${badge}</td>
+              <td class="mono">${esc(item.requested_by || item.actor_id || "-")}</td>
+              <td>${actions}</td>
+            </tr>`;
+          }).join("");
+        } catch (err) {
+          banner.className = "banner banner-err";
+          banner.textContent = `Network error: ${err.message}`;
+          banner.classList.remove("hidden");
+        }
+      }
+
+      window.decideApproval = async function (id, action) {
+        const key = document.getElementById("approvals-key").value;
+        const banner = document.getElementById("approvals-banner");
+        try {
+          const resp = await fetch(`/v1/approvals/${encodeURIComponent(id)}/${action}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-API-Key": key
+            },
+            body: JSON.stringify({ comment: `${action}d via Ops Console` })
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            banner.className = "banner banner-err";
+            banner.textContent = `Action failed (HTTP ${resp.status}): ${data.detail || JSON.stringify(data)}`;
+          } else {
+            banner.className = "banner banner-ok";
+            banner.textContent = `Requisition ${id} ${action}d successfully.`;
+          }
+          banner.classList.remove("hidden");
+          await loadApprovals();
+        } catch (err) {
+          banner.className = "banner banner-err";
+          banner.textContent = `Action failed: ${err.message}`;
+          banner.classList.remove("hidden");
+        }
+      };
+      document.getElementById("approvals-refresh").addEventListener("click", loadApprovals);
+
+      // Tab 3: Audit & Hash Chain
+      async function loadAudit() {
+        const key = document.getElementById("audit-key").value;
+        const errEl = document.getElementById("audit-error");
+        const tbody = document.getElementById("audit-body");
+        errEl.classList.add("hidden");
+
+        try {
+          const resp = await fetch("/v1/audit", { headers: { "X-API-Key": key } });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            errEl.textContent = `Failed to load audit log (HTTP ${resp.status}): ${data.detail || JSON.stringify(data)}`;
+            errEl.classList.remove("hidden");
+            return;
+          }
+          const entries = Array.isArray(data) ? data : (data.entries || data.items || []);
+          if (entries.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="muted">Audit log is empty.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = entries.map((e) => `<tr>
+            <td class="mono">${esc(e.id)}</td>
+            <td class="mono">${esc(e.timestamp_iso || e.created_at || "-")}</td>
+            <td class="mono">${esc(e.tenant_id)}</td>
+            <td class="mono">${esc(e.actor_id)}</td>
+            <td class="mono">${esc(e.tool_name)}</td>
+            <td>${policyBadge(e.outcome)}</td>
+            <td class="mono">${esc(e.trace_id)}</td>
+            <td class="mono" title="${esc(e.prev_hash)}">${shortHash(e.prev_hash)}</td>
+            <td class="mono" title="${esc(e.entry_hash)}">${shortHash(e.entry_hash)}</td>
+          </tr>`).join("");
+        } catch (err) {
+          errEl.textContent = `Failed to load audit log: ${err.message}`;
+          errEl.classList.remove("hidden");
+        }
+      }
+
+      async function verifyAudit() {
+        const key = document.getElementById("audit-key").value;
+        const banner = document.getElementById("audit-verify-banner");
+        try {
+          const resp = await fetch("/v1/audit/verify", { headers: { "X-API-Key": key } });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            banner.className = "banner banner-err";
+            banner.textContent = `Verification failed (HTTP ${resp.status}): ${data.detail || JSON.stringify(data)}`;
+            banner.classList.remove("hidden");
+            return;
+          }
+          if (data.valid) {
+            banner.className = "banner banner-ok";
+            banner.innerHTML = `<strong>INTACT</strong> — Checked ${esc(data.checked_entries)} / ${esc(data.total_entries)} entries. ${esc(data.reason || "Hash chain verified intact")}`;
+          } else {
+            banner.className = "banner banner-err";
+            banner.innerHTML = `<strong>TAMPER DETECTED</strong> — Broken at ID ${esc(data.broken_at_id ?? "?")}. ${esc(data.reason || "")}`;
+          }
+          banner.classList.remove("hidden");
+        } catch (err) {
+          banner.className = "banner banner-err";
+          banner.textContent = `Verification request failed: ${err.message}`;
+          banner.classList.remove("hidden");
+        }
+      }
+      document.getElementById("audit-refresh").addEventListener("click", loadAudit);
+      document.getElementById("audit-verify-btn").addEventListener("click", verifyAudit);
+
+      // Tab 4: Eval Scorecard
+      async function loadEvals() {
+        const errEl = document.getElementById("evals-error");
+        const metaEl = document.getElementById("evals-meta");
+        const modelsBody = document.getElementById("evals-models-body");
+        const catBody = document.getElementById("evals-category-body");
+        errEl.classList.add("hidden");
+
+        try {
+          const resp = await fetch("/v1/evals/latest");
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            errEl.textContent = `No eval report found (HTTP ${resp.status}). Run 'make eval' first.`;
+            errEl.classList.remove("hidden");
+            return;
+          }
+
+          const models = Array.isArray(data) ? data : (data.models || data.reports || []);
+          metaEl.textContent = data.generated_at
+            ? `Generated at ${data.generated_at} • Dataset: ${data.dataset || "evals/golden_dataset.json"}`
+            : "";
+
+          if (models.length === 0) {
+            modelsBody.innerHTML = `<tr><td colspan="10" class="muted">No model reports available. Run 'make eval'.</td></tr>`;
+            catBody.innerHTML = `<tr><td colspan="5" class="muted">No category breakdown available.</td></tr>`;
+            return;
+          }
+
+          modelsBody.innerHTML = models.map((m) => `<tr>
+            <td class="mono"><strong>${esc(m.model)}</strong></td>
+            <td class="num">${esc(m.passed_cases)} / ${esc(m.total_cases)}</td>
+            <td class="num">${pct(m.pass_rate)}</td>
+            <td class="num">${pct(m.tool_accuracy)}</td>
+            <td class="num">${pct(m.policy_compliance_rate)}</td>
+            <td class="num">${pct(m.security_block_rate)}</td>
+            <td class="num">${Number(m.p50_latency_ms || 0).toFixed(1)}</td>
+            <td class="num">${Number(m.p95_latency_ms || 0).toFixed(1)}</td>
+            <td class="num">${esc(m.total_tokens ?? 0)}</td>
+            <td class="num">$${Number(m.total_cost_usd || 0).toFixed(5)}</td>
+          </tr>`).join("");
+
+          let breakdown = data.category_breakdown || {};
+          if (Object.keys(breakdown).length === 0) {
+            breakdown = {};
+            models.forEach((m) => {
+              const map = {};
+              (m.results || []).forEach((r) => {
+                if (!map[r.category]) map[r.category] = { total: 0, passed: 0 };
+                map[r.category].total += 1;
+                if (r.passed) map[r.category].passed += 1;
+              });
+              Object.keys(map).forEach((c) => {
+                map[c].pass_rate = map[c].total ? map[c].passed / map[c].total : 0;
+              });
+              breakdown[m.model] = map;
+            });
+          }
+
+          const catRows = [];
+          Object.entries(breakdown).forEach(([modelName, cats]) => {
+            Object.entries(cats).forEach(([catName, stats]) => {
+              catRows.push(`<tr>
+                <td class="mono">${esc(modelName)}</td>
+                <td class="mono">${esc(catName)}</td>
+                <td class="num">${esc(stats.passed)}</td>
+                <td class="num">${esc(stats.total)}</td>
+                <td class="num">${pct(stats.pass_rate)}</td>
+              </tr>`);
+            });
+          });
+          catBody.innerHTML = catRows.length
+            ? catRows.join("")
+            : `<tr><td colspan="5" class="muted">No per-category results available.</td></tr>`;
+        } catch (err) {
+          errEl.textContent = `Failed to load eval scorecard: ${err.message}`;
+          errEl.classList.remove("hidden");
+        }
+      }
+      document.getElementById("evals-refresh").addEventListener("click", loadEvals);
+    })();
+  </script>
+</body>
+</html>

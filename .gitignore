@@ -1,0 +1,26 @@
+# Python & Virtualenv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment & Local Secrets
+.env
+*.pem
+*.key
+
+# Runtime State & Local Databases
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/traces/
+
+# Cloned Upstream Reference Repositories (credited in README.md)
+base/
+
+# Logs & OS Files
+*.log
+.DS_Store

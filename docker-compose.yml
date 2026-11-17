@@ -1,0 +1,116 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sovereign}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sovereign}
+      POSTGRES_DB: ${POSTGRES_DB:-sovereign}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sovereign} -d ${POSTGRES_DB:-sovereign}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mcp_erp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python -m dataset.seed && python -m services.mcp_erp.server"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sovereign}:${POSTGRES_PASSWORD:-sovereign}@postgres:5432/${POSTGRES_DB:-sovereign}
+      REDIS_URL: redis://redis:6379/0
+      MCP_API_KEY: ${MCP_API_KEY:-dev-mcp-internal-key}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-secret-key}
+    ports:
+      - "8101:8101"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8101/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mcp_knowledge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m services.mcp_knowledge.server
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sovereign}:${POSTGRES_PASSWORD:-sovereign}@postgres:5432/${POSTGRES_DB:-sovereign}
+      MCP_API_KEY: ${MCP_API_KEY:-dev-mcp-internal-key}
+      SOPS_DIR: /app/dataset/sops
+    ports:
+      - "8102:8102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8102/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn services.gateway.app:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sovereign}:${POSTGRES_PASSWORD:-sovereign}@postgres:5432/${POSTGRES_DB:-sovereign}
+      REDIS_URL: redis://redis:6379/0
+      MCP_API_KEY: ${MCP_API_KEY:-dev-mcp-internal-key}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-secret-key}
+      ERP_MCP_URL: http://mcp_erp:8101/mcp
+      ERP_ADMIN_URL: http://mcp_erp:8101
+      KNOWLEDGE_MCP_URL: http://mcp_knowledge:8102/mcp
+      GATEWAY_HOST: 0.0.0.0
+      GATEWAY_PORT: 8000
+      LLM_MODE: ${LLM_MODE:-offline}
+      PRIMARY_MODEL: ${PRIMARY_MODEL:-gemini-3.8-flash}
+      FALLBACK_MODEL: ${FALLBACK_MODEL:-gemini-3.5-flash-lite}
+      VERTEX_PROJECT_ID: ${VERTEX_PROJECT_ID:-gen-lang-client-0430700811}
+      VERTEX_LOCATION: ${VERTEX_LOCATION:-global}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      PYTHON_EXECUTABLE: /app/.venv/bin/python
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mcp_erp:
+        condition: service_healthy
+      mcp_knowledge:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

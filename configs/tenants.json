@@ -1,0 +1,46 @@
+{
+  "api_keys": {
+    "havells-viewer-key": {
+      "tenant_id": "havells_electricals",
+      "user_id": "u_havells_viewer_01",
+      "role": "viewer",
+      "scopes": ["erp:read", "knowledge:read"],
+      "rpm_limit": 30
+    },
+    "havells-sales-key": {
+      "tenant_id": "havells_electricals",
+      "user_id": "u_havells_sales_01",
+      "role": "sales_rep",
+      "scopes": ["erp:read", "knowledge:read", "ops:write"],
+      "rpm_limit": 60
+    },
+    "havells-mgr-key": {
+      "tenant_id": "havells_electricals",
+      "user_id": "u_havells_mgr_01",
+      "role": "manager",
+      "scopes": ["erp:read", "erp:write", "knowledge:read", "ops:write", "approvals:decide"],
+      "rpm_limit": 120
+    },
+    "havells-admin-key": {
+      "tenant_id": "havells_electricals",
+      "user_id": "u_havells_admin_01",
+      "role": "admin",
+      "scopes": ["*"],
+      "rpm_limit": 240
+    },
+    "licious-sales-key": {
+      "tenant_id": "licious_coldchain",
+      "user_id": "u_licious_sales_01",
+      "role": "sales_rep",
+      "scopes": ["erp:read", "knowledge:read", "ops:write"],
+      "rpm_limit": 60
+    },
+    "licious-mgr-key": {
+      "tenant_id": "licious_coldchain",
+      "user_id": "u_licious_mgr_01",
+      "role": "manager",
+      "scopes": ["erp:read", "erp:write", "knowledge:read", "ops:write", "approvals:decide"],
+      "rpm_limit": 120
+    }
+  }
+}

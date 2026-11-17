@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "erp": {
+      "transport": "streamable_http",
+      "url": "${env:ERP_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${env:MCP_API_KEY}"
+      }
+    },
+    "knowledge": {
+      "transport": "streamable_http",
+      "url": "${env:KNOWLEDGE_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${env:MCP_API_KEY}"
+      }
+    },
+    "ops": {
+      "transport": "stdio",
+      "command": "${env:PYTHON_EXECUTABLE}",
+      "args": ["-m", "services.mcp_ops.server"],
+      "env": {
+        "DATABASE_URL": "${env:DATABASE_URL}"
+      }
+    }
+  }
+}
